@@ -22,7 +22,8 @@
 				"timonwong.shellcheck"
 			],
 			"settings": {
-				"terminal.integrated.defaultProfile.linux": "zsh"
+				"terminal.integrated.defaultProfile.linux": "zsh",
+				"dart.sdkPath": "/opt/dart-sdk"
 			}
 		}
 	},

@@ -1,15 +1,19 @@
 name: etesync_fixer
-description: A sample command-line application.
+description: A small background service to fix up CalDAV/CardDAV entries created from iOS.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
 
 environment:
-  sdk: ^3.1.5
+  sdk: ^3.1.0
 
-# Add regular dependencies here.
-dependencies:
-  # path: ^1.8.0
+platforms:
+  linux:
+
+executables:
+  etesync-fixer: etesync_fixer
 
 dev_dependencies:
-  lints: ^2.0.0
-  test: ^1.21.0
+  dart_pre_commit: ^5.2.1
+  dart_test_tools: ^5.5.0
+
+dart_pre_commit:
+  flutter-compat: false
