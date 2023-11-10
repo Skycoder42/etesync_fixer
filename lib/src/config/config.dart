@@ -5,7 +5,10 @@ part 'config.g.dart';
 
 @freezed
 class Config with _$Config {
+  static const empty = Config();
+
   const factory Config({
+    Uri? server,
     String? encryptedAccountData,
   }) = _Config;
 

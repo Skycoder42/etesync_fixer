@@ -5,27 +5,18 @@ import 'package:build_cli_annotations/build_cli_annotations.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 
-part 'options.g.dart';
+part 'global_options.g.dart';
 
-@CliOptions()
 @immutable
-final class Options {
-  @CliOption(
-    convert: _uriFromString,
-    abbr: 's',
-    valueHelp: 'url',
-    help:
-        'Use a custom etebase server. By default, the standard server is used.',
-  )
-  final Uri? server;
-
+@CliOptions()
+final class GlobalOptions {
   @CliOption(
     abbr: 'L',
     valueHelp: 'path',
     defaultsTo: '/usr/lib/libetebase.so',
     help: 'The path to the libetebase.so.',
   )
-  final String libetebasePath;
+  final String libetebase;
 
   @CliOption(
     convert: _binaryDataFromPathString,
@@ -35,6 +26,15 @@ final class Options {
         'secure the persisted account data.',
   )
   final Uint8List? encryptionKey;
+
+  @CliOption(
+    abbr: 'c',
+    valueHelp: 'path',
+    defaultsTo: '/etc/etesync-fixer.json',
+    help: 'The path to the configuration file where app specific settings '
+        'should be persisted to.',
+  )
+  final String config;
 
   @CliOption(
     convert: _logLevelFromString,
@@ -58,44 +58,20 @@ final class Options {
   )
   final Level logLevel;
 
-  @CliOption(
-    abbr: 'v',
-    negatable: false,
-    defaultsTo: false,
-    help: 'Prints the current version of the tool.',
-  )
-  final bool version;
-
-  @CliOption(
-    abbr: 'h',
-    negatable: false,
-    defaultsTo: false,
-    help: 'Prints usage information.',
-  )
-  final bool help;
-
   @visibleForTesting
-  const Options({
-    required this.server,
-    required this.libetebasePath,
+  const GlobalOptions({
+    required this.libetebase,
     required this.encryptionKey,
+    required this.config,
     required this.logLevel,
-    this.version = false,
-    this.help = false,
   });
 
-  static ArgParser buildArgParser() => _$populateOptionsParser(
-        ArgParser(
-          allowTrailingOptions: false,
-          usageLineLength: stdout.hasTerminal ? stdout.terminalColumns : null,
-        ),
-      );
+  static ArgParser configureArgParser(ArgParser argParser) =>
+      _$populateGlobalOptionsParser(argParser);
 
-  static Options parseOptions(ArgResults argResults) =>
-      _$parseOptionsResult(argResults);
+  static GlobalOptions parseOptions(ArgResults argResults) =>
+      _$parseGlobalOptionsResult(argResults);
 }
-
-Uri? _uriFromString(String? uri) => uri != null ? Uri.parse(uri) : null;
 
 Level _logLevelFromString(String level) =>
     Level.LEVELS.singleWhere((element) => element.name == level.toUpperCase());
