@@ -33,5 +33,5 @@
 			"omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions"
 		}
 	},
-	"postCreateCommand": "dart --disable-analytics"
+	"postCreateCommand": "dart --disable-analytics && dart run tool/setup_git_hooks.dart"
 }

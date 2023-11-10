@@ -26,5 +26,9 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# Generated files
+*.g.dart
+*.freezed.dart
+
 # logfiles
 custom_lint.log
