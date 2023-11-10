@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:build_cli_annotations/build_cli_annotations.dart';
 import 'package:logging/logging.dart';
@@ -25,6 +26,15 @@ final class Options {
     help: 'The path to the libetebase.so.',
   )
   final String libetebasePath;
+
+  @CliOption(
+    convert: _binaryDataFromPathString,
+    abbr: 'k',
+    valueHelp: 'path',
+    help: 'The path to a binary file containing the encryption key used to '
+        'secure the persisted account data.',
+  )
+  final Uint8List? encryptionKey;
 
   @CliOption(
     convert: _logLevelFromString,
@@ -68,6 +78,7 @@ final class Options {
   const Options({
     required this.server,
     required this.libetebasePath,
+    required this.encryptionKey,
     required this.logLevel,
     this.version = false,
     this.help = false,
@@ -88,3 +99,6 @@ Uri? _uriFromString(String? uri) => uri != null ? Uri.parse(uri) : null;
 
 Level _logLevelFromString(String level) =>
     Level.LEVELS.singleWhere((element) => element.name == level.toUpperCase());
+
+Uint8List? _binaryDataFromPathString(String? path) =>
+    path != null ? File(path).readAsBytesSync() : null;

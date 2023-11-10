@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:etesync_fixer/src/cli/cli_options.dart';
-import 'package:etesync_fixer/src/etebase/etebase_provider.dart';
+import 'package:etesync_fixer/src/etebase/account_manager.dart';
 import 'package:logging/logging.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -12,9 +12,9 @@ Future<void> main(List<String> arguments) async {
   try {
     container.read(cliOptionsProvider.notifier).parse(arguments);
 
-    final client = await container.read(etebaseClientProvider.future);
+    final account = await container.read(accountManagerProvider.future);
     // ignore: avoid_print
-    print(await client.checkEtebaseServer());
+    print(await account.fetchDashboardUrl());
   } finally {
     container.dispose();
   }

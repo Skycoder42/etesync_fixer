@@ -8,7 +8,7 @@ import '../cli/cli_options.dart';
 part 'etebase_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-void etebaseInitializer(EtebaseInitializerRef ref) {
+void _etebaseInitializer(_EtebaseInitializerRef ref) {
   final options = ref.watch(cliOptionsProvider);
   Etebase.ensureInitialized(
     () => DynamicLibrary.open(options.libetebasePath),
@@ -20,8 +20,9 @@ void etebaseInitializer(EtebaseInitializerRef ref) {
 @Riverpod(keepAlive: true)
 Future<EtebaseClient> etebaseClient(EtebaseClientRef ref) {
   ref
-    ..watch(etebaseInitializerProvider)
+    ..watch(_etebaseInitializerProvider)
     ..onDispose(() => ref.state.valueOrNull?.dispose());
+
   return EtebaseClient.create(
     'etesync-fixer',
     ref.watch(cliOptionsProvider).server,

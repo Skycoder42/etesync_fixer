@@ -16,6 +16,8 @@ dependencies:
   args: ^2.4.2
   build_cli_annotations: ^2.1.0
   etebase: ^1.0.2
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
   logging: ^1.2.0
   meta: ^1.11.0
   riverpod: ^2.4.5
@@ -27,6 +29,8 @@ dev_dependencies:
   custom_lint: ^0.5.6
   dart_pre_commit: ^5.2.1
   dart_test_tools: ^5.5.0
+  freezed: ^2.4.5
+  json_serializable: ^6.7.1
   pubspec_generator: ^4.0.0
   riverpod_generator: ^2.3.5
   riverpod_lint: ^2.3.3
