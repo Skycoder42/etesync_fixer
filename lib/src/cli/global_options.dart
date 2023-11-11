@@ -4,8 +4,15 @@ import 'dart:typed_data';
 import 'package:build_cli_annotations/build_cli_annotations.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import 'riverpod/riverpod_command_runner.dart';
 
 part 'global_options.g.dart';
+
+@Riverpod(keepAlive: true)
+GlobalOptions globalOptions(GlobalOptionsRef ref) =>
+    throw StateError('globalOptionsProvider must be overridden');
 
 @immutable
 @CliOptions()
@@ -70,6 +77,19 @@ final class GlobalOptions {
       _$populateGlobalOptionsParser(argParser);
 
   static GlobalOptions parseOptions(ArgResults argResults) =>
+      _$parseGlobalOptionsResult(argResults);
+}
+
+mixin GlobalOptionsRunnerMixin<TReturn>
+    on RiverpodCommandRunner<TReturn, GlobalOptions> {
+  @override
+  @protected
+  void configureGlobalOptions(ArgParser argParser) =>
+      _$populateGlobalOptionsParser(argParser);
+
+  @override
+  @protected
+  GlobalOptions parseGlobalOptions(ArgResults argResults) =>
       _$parseGlobalOptionsResult(argResults);
 }
 
