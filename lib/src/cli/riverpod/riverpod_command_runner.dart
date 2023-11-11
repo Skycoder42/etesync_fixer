@@ -3,16 +3,17 @@ import 'package:args/command_runner.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 
+import 'riverpod_command.dart';
+
 abstract class RiverpodCommandRunner<TResult, TGlobalOptions extends Object>
     extends CommandRunner<TResult> {
   final Provider<TGlobalOptions> _globalOptionsProvider;
 
-  final _commandProviders = <Provider<Command<TResult>>>{};
+  final _commandProviders = <Provider<RiverpodCommand<TResult>>>{};
 
   final ProviderContainer? containerParent;
   final List<Override> containerOverrides;
   final List<ProviderObserver>? containerObservers;
-  late final ProviderContainer _container;
 
   RiverpodCommandRunner(
     this._globalOptionsProvider,
@@ -25,29 +26,33 @@ abstract class RiverpodCommandRunner<TResult, TGlobalOptions extends Object>
     configureGlobalOptions(argParser);
   }
 
-  bool addCommandProvider<TCommand extends Command<TResult>>(
+  bool addCommandProvider<TCommand extends RiverpodCommand<TResult>>(
     Provider<TCommand> provider,
   ) =>
       _commandProviders.add(provider);
 
   @override
-  Future<TResult?> runCommand(ArgResults topLevelResults) {
-    _container = ProviderContainer(
-      parent: containerParent,
-      overrides: [
+  @nonVirtual
+  Future<TResult?> run(Iterable<String> args) async {
+    final container = _createProviderContainer();
+    try {
+      for (final commandProvider in _commandProviders) {
+        addCommand(container.read(commandProvider));
+      }
+
+      final topLevelResults = parse(args);
+
+      container.updateOverrides([
         ...containerOverrides,
         _globalOptionsProvider.overrideWithValue(
           parseGlobalOptions(topLevelResults),
         ),
-      ],
-      observers: containerObservers,
-    );
+      ]);
 
-    for (final commandProvider in _commandProviders) {
-      addCommand(_container.read(commandProvider));
+      return await runCommand(topLevelResults);
+    } finally {
+      container.dispose();
     }
-
-    return super.runCommand(topLevelResults);
   }
 
   @protected
@@ -57,6 +62,20 @@ abstract class RiverpodCommandRunner<TResult, TGlobalOptions extends Object>
   TGlobalOptions parseGlobalOptions(ArgResults argResults);
 
   @override
+  @nonVirtual
   @visibleForTesting
   void addCommand(Command<TResult> command) => super.addCommand(command);
+
+  ProviderContainer _createProviderContainer() => ProviderContainer(
+        parent: containerParent,
+        overrides: [
+          ...containerOverrides,
+          _globalOptionsProvider.overrideWith(
+            (ref) => throw StateError(
+              'You cannot access the global options before run is called!',
+            ),
+          ),
+        ],
+        observers: containerObservers,
+      );
 }
