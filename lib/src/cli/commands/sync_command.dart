@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../etebase/account_manager.dart';
+import '../riverpod/riverpod_command.dart';
 
 part 'sync_command.g.dart';
 
@@ -10,7 +11,8 @@ part 'sync_command.g.dart';
 @Riverpod(keepAlive: true)
 SyncCommand syncCommand(SyncCommandRef ref) => SyncCommand(ref);
 
-class SyncCommand extends Command<int> {
+class SyncCommand extends Command<int> with RiverpodCommand<int> {
+  @override
   final SyncCommandRef ref;
 
   SyncCommand(this.ref);

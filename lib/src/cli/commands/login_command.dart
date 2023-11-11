@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../config/config_loader.dart';
 import '../../etebase/account_manager.dart';
+import '../riverpod/riverpod_command.dart';
 
 part 'login_command.g.dart';
 
@@ -29,7 +30,9 @@ final class LoginOptions {
   });
 }
 
-class LoginCommand extends _$LoginOptionsCommand<int> {
+class LoginCommand extends _$LoginOptionsCommand<int>
+    with RiverpodCommand<int> {
+  @override
   final LoginCommandRef ref;
 
   LoginCommand(this.ref);

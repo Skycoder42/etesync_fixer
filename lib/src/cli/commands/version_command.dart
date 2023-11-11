@@ -2,17 +2,24 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:meta/meta.dart';
+import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../constants/pubspec.yaml.g.dart';
+import '../riverpod/riverpod_command.dart';
 
 part 'version_command.g.dart';
 
 @visibleForTesting
 @Riverpod(keepAlive: true)
-VersionCommand versionCommand(VersionCommandRef ref) => VersionCommand();
+VersionCommand versionCommand(VersionCommandRef ref) => VersionCommand(ref);
 
-class VersionCommand extends Command<int> {
+class VersionCommand extends Command<int> with RiverpodCommand<int> {
+  @override
+  final Ref ref;
+
+  VersionCommand(this.ref);
+
   @override
   String get name => 'version';
 
