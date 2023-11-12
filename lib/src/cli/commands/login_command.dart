@@ -1,17 +1,12 @@
 import 'package:args/command_runner.dart';
 import 'package:build_cli_annotations/build_cli_annotations.dart';
 import 'package:meta/meta.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../config/config_loader.dart';
 import '../../etebase/account_manager.dart';
-import '../riverpod/riverpod_command.dart';
+import '../riverpod/riverpod_command_runner.dart';
 
 part 'login_command.g.dart';
-
-@visibleForTesting
-@Riverpod(keepAlive: true)
-LoginCommand loginCommand(LoginCommandRef ref) => LoginCommand(ref);
 
 @immutable
 @CliOptions(createCommand: true)
@@ -32,11 +27,6 @@ final class LoginOptions {
 
 class LoginCommand extends _$LoginOptionsCommand<int>
     with RiverpodCommand<int> {
-  @override
-  final LoginCommandRef ref;
-
-  LoginCommand(this.ref);
-
   @override
   String get name => 'login';
 
@@ -66,13 +56,13 @@ class LoginCommand extends _$LoginOptionsCommand<int>
   }
 
   Future<int> _run(String username, String password) async {
-    await ref.read(configLoaderProvider.notifier).updateConfig(
+    await container.read(configLoaderProvider.notifier).updateConfig(
           (c) => c.copyWith(
             server: _options.server,
           ),
         );
 
-    final accountManager = ref.read(accountManagerProvider.notifier);
+    final accountManager = container.read(accountManagerProvider.notifier);
     await accountManager.login(username, password);
     return 0;
   }

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:etebase/etebase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../cli/cli.dart';
+import '../cli/global_options.dart';
 import '../config/config_loader.dart';
 import 'etebase_provider.dart';
 

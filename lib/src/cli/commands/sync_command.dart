@@ -1,22 +1,9 @@
 import 'package:args/command_runner.dart';
-import 'package:meta/meta.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../etebase/account_manager.dart';
-import '../riverpod/riverpod_command.dart';
-
-part 'sync_command.g.dart';
-
-@visibleForTesting
-@Riverpod(keepAlive: true)
-SyncCommand syncCommand(SyncCommandRef ref) => SyncCommand(ref);
+import '../riverpod/riverpod_command_runner.dart';
 
 class SyncCommand extends Command<int> with RiverpodCommand<int> {
-  @override
-  final SyncCommandRef ref;
-
-  SyncCommand(this.ref);
-
   @override
   String get name => 'sync';
 
@@ -32,7 +19,7 @@ class SyncCommand extends Command<int> with RiverpodCommand<int> {
 
   @override
   Future<int> run() async {
-    final account = await ref.read(accountManagerProvider.future);
+    final account = await container.read(accountManagerProvider.future);
     final url = await account.fetchDashboardUrl();
     return url.toString().length;
   }

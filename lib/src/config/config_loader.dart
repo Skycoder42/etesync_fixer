@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../cli/cli.dart';
+import '../cli/global_options.dart';
 import 'config.dart';
 
 part 'config_loader.g.dart';

@@ -89,8 +89,10 @@ mixin GlobalOptionsRunnerMixin<TReturn>
 
   @override
   @protected
-  GlobalOptions parseGlobalOptions(ArgResults argResults) =>
-      _$parseGlobalOptionsResult(argResults);
+  Override parseGlobalOptions(ArgResults argResults) =>
+      globalOptionsProvider.overrideWithValue(
+        _$parseGlobalOptionsResult(argResults),
+      );
 }
 
 Level _logLevelFromString(String level) =>

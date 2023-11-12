@@ -11,13 +11,12 @@ class Cli extends RiverpodCommandRunner<int, GlobalOptions>
     with GlobalOptionsRunnerMixin {
   Cli()
       : super(
-          globalOptionsProvider,
           Platform.script.pathSegments.last,
           Pubspec.description,
         ) {
-    addCommandProvider(loginCommandProvider);
-    addCommandProvider(syncCommandProvider);
-    addCommandProvider(versionCommandProvider);
+    addCommand(LoginCommand());
+    addCommand(SyncCommand());
+    addCommand(VersionCommand());
   }
 
   // TODO setup logging
