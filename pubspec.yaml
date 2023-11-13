@@ -34,6 +34,13 @@ dev_dependencies:
   pubspec_generator: ^4.0.0
   riverpod_generator: ^2.3.5
   riverpod_lint: ^2.3.3
+  rps: ^0.7.0
 
 dart_pre_commit:
   flutter-compat: false
+
+scripts:
+  account:
+    login: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json account login --server=https://etebase.skycoder42.de
+    logout: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json account logout
+  sync: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json sync

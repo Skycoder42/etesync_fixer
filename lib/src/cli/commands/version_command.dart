@@ -16,7 +16,7 @@ class VersionCommand extends Command<int> with RiverpodCommand<int> {
   bool get takesArguments => false;
 
   @override
-  String get invocation => super.invocation.replaceAll('[arguments]', '');
+  bool get hidden => true;
 
   @override
   int run() {

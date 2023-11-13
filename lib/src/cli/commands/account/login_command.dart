@@ -2,9 +2,9 @@ import 'package:args/command_runner.dart';
 import 'package:build_cli_annotations/build_cli_annotations.dart';
 import 'package:meta/meta.dart';
 
-import '../../config/config_loader.dart';
-import '../../etebase/account_manager.dart';
-import '../riverpod/riverpod_command_runner.dart';
+import '../../../config/config_loader.dart';
+import '../../../etebase/account_manager.dart';
+import '../../riverpod/riverpod_command_runner.dart';
 
 part 'login_command.g.dart';
 
@@ -37,9 +37,7 @@ class LoginCommand extends _$LoginOptionsCommand<int>
   bool get takesArguments => true;
 
   @override
-  String get invocation => super
-      .invocation
-      .replaceFirst('[arguments]', '[options] <username> <password>');
+  String get invocation => '${super.invocation} <username> <password>';
 
   @override
   Future<int> run() {

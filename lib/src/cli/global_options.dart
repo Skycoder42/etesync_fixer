@@ -65,12 +65,19 @@ final class GlobalOptions {
   )
   final Level logLevel;
 
+  @CliOption(
+    negatable: false,
+    help: 'Print the version of the tool.',
+  )
+  final bool version;
+
   @visibleForTesting
   const GlobalOptions({
     required this.libetebase,
     required this.encryptionKey,
     required this.config,
     required this.logLevel,
+    this.version = false,
   });
 
   static ArgParser configureArgParser(ArgParser argParser) =>
@@ -80,8 +87,7 @@ final class GlobalOptions {
       _$parseGlobalOptionsResult(argResults);
 }
 
-mixin GlobalOptionsRunnerMixin<TReturn>
-    on RiverpodCommandRunner<TReturn, GlobalOptions> {
+mixin GlobalOptionsRunnerMixin<TReturn> on RiverpodCommandRunner<TReturn> {
   @override
   @protected
   void configureGlobalOptions(ArgParser argParser) =>

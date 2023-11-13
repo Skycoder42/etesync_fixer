@@ -14,12 +14,9 @@ class SyncCommand extends Command<int> with RiverpodCommand<int> {
   bool get takesArguments => false;
 
   @override
-  String get invocation =>
-      super.invocation.replaceAll('[arguments]', '[options]');
-
-  @override
   Future<int> run() async {
-    final account = await container.read(accountManagerProvider.future);
+    await container.read(accountManagerProvider.notifier).restore();
+    final account = await container.read(etebaseAccountProvider.future);
     final url = await account.fetchDashboardUrl();
     return url.toString().length;
   }

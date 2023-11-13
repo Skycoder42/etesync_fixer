@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:meta/meta.dart';
@@ -5,8 +7,8 @@ import 'package:riverpod/riverpod.dart';
 
 mixin RiverpodCommand<TResult> on Command<TResult> {
   @override
-  RiverpodCommandRunner<TResult, Object>? get runner =>
-      super.runner as RiverpodCommandRunner<TResult, Object>?;
+  RiverpodCommandRunner<TResult>? get runner =>
+      super.runner as RiverpodCommandRunner<TResult>?;
 
   @protected
   late final ProviderContainer container = runner!._container;
@@ -16,8 +18,7 @@ mixin RiverpodCommand<TResult> on Command<TResult> {
       super.addSubcommand(command);
 }
 
-abstract class RiverpodCommandRunner<TResult, TGlobalOptions extends Object>
-    extends CommandRunner<TResult> {
+abstract class RiverpodCommandRunner<TResult> extends CommandRunner<TResult> {
   final ProviderContainer? containerParent;
   final List<Override> containerOverrides;
   final List<ProviderObserver>? containerObservers;
@@ -35,10 +36,15 @@ abstract class RiverpodCommandRunner<TResult, TGlobalOptions extends Object>
   }
 
   @override
-  @mustCallSuper
+  @nonVirtual
   Future<TResult?> runCommand(ArgResults topLevelResults) async {
     _createProviderContainer(topLevelResults);
     try {
+      final preResult = await beforeRunCommand(_container);
+      if (preResult != null) {
+        return preResult;
+      }
+
       return await super.runCommand(topLevelResults);
     } finally {
       _container.dispose();
@@ -50,6 +56,9 @@ abstract class RiverpodCommandRunner<TResult, TGlobalOptions extends Object>
 
   @protected
   Override parseGlobalOptions(ArgResults argResults);
+
+  @protected
+  FutureOr<TResult?> beforeRunCommand(ProviderContainer container);
 
   void _createProviderContainer(ArgResults topLevelResults) =>
       _container = ProviderContainer(

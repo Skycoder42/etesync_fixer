@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../cli/global_options.dart';
 import '../config/config_loader.dart';
+import '../extensions/riverpod_extensions.dart';
 import 'etebase_provider.dart';
 
 part 'account_manager.g.dart';
@@ -15,46 +16,88 @@ class NotLoggedInException implements Exception {
 }
 
 @Riverpod(keepAlive: true)
+Future<EtebaseAccount> etebaseAccount(EtebaseAccountRef ref) async {
+  final account = await ref.watch(accountManagerProvider.future);
+  if (account == null) {
+    throw NotLoggedInException();
+  }
+  return account;
+}
+
+@Riverpod(keepAlive: true)
 class AccountManager extends _$AccountManager {
   @override
-  Future<EtebaseAccount> build() async {
-    final config = await ref.watch(configLoaderProvider.future);
-    if (config.encryptedAccountData == null) {
-      throw NotLoggedInException();
-    }
-
+  Future<EtebaseAccount?> build() {
     ref.onDispose(() => state.valueOrNull?.dispose());
-
-    final options = ref.watch(globalOptionsProvider);
-    final client = await ref.watch(etebaseClientProvider.future);
-    return EtebaseAccount.restore(
-      client,
-      config.encryptedAccountData!,
-      options.encryptionKey,
-    );
+    return Future.value();
   }
 
-  Future<void> login(String username, String password) async {
-    state = const AsyncValue.loading();
+  Future<void> restore() => updateAsync((oldAccount) async {
+        if (oldAccount != null) {
+          return oldAccount;
+        }
 
-    ref.onDispose(() => state.valueOrNull?.dispose());
+        final encryptedAccountData = await ref.read(
+          configLoaderProvider.selectAsync((c) => c.encryptedAccountData),
+        );
+        if (encryptedAccountData == null) {
+          throw NotLoggedInException();
+        }
 
-    EtebaseAccount? account;
-    try {
-      final config = ref.read(globalOptionsProvider);
-      final client = await ref.read(etebaseClientProvider.future);
-      account = await EtebaseAccount.login(client, username, password);
-      final accountData = await account.save(config.encryptionKey);
-      await ref.read(configLoaderProvider.notifier).updateConfig(
-            (c) => c.copyWith(
-              encryptedAccountData: accountData,
-            ),
+        final encryptionKey = ref.read(
+          globalOptionsProvider.select((o) => o.encryptionKey),
+        );
+        final client = await ref.read(etebaseClientProvider.future);
+
+        return EtebaseAccount.restore(
+          client,
+          encryptedAccountData,
+          encryptionKey,
+        );
+      });
+
+  Future<void> login(String username, String password) =>
+      updateAsync((oldAccount) async {
+        if (oldAccount != null) {
+          return oldAccount;
+        }
+
+        final client = await ref.read(etebaseClientProvider.future);
+        final account = await EtebaseAccount.login(client, username, password);
+
+        try {
+          final encryptionKey = ref.read(
+            globalOptionsProvider.select((o) => o.encryptionKey),
           );
-      state = AsyncValue.data(account);
-    } on Exception catch (e, s) {
-      state = AsyncValue.error(e, s);
-      unawaited(account?.dispose());
-      rethrow;
-    }
-  }
+          final accountData = await account.save(encryptionKey);
+
+          await ref.read(configLoaderProvider.notifier).updateConfig(
+                (c) => c.copyWith(
+                  encryptedAccountData: accountData,
+                ),
+              );
+
+          return account;
+
+          // ignore: avoid_catches_without_on_clauses
+        } catch (e) {
+          await account.dispose();
+          rethrow;
+        }
+      });
+
+  Future<void> logout() => updateAsync((oldAccount) async {
+        await ref.read(configLoaderProvider.notifier).updateConfig(
+              (c) => c.copyWith(
+                encryptedAccountData: null,
+              ),
+            );
+
+        if (oldAccount != null) {
+          await oldAccount.logout();
+          await oldAccount.dispose();
+        }
+
+        return null;
+      });
 }

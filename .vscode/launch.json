@@ -11,11 +11,8 @@
       "program": "bin/etesync_fixer.dart",
       "args": [
         "--log-level=all",
-        "--config=/workspaces/etesync_fixer/debug.json",
-        "login",
-        "--server=https://etebase.skycoder42.de",
-        "a",
-        "b",
+        "--config=./test-config.json",
+        "sync",
       ]
     }
   ]
