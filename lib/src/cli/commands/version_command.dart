@@ -5,7 +5,7 @@ import 'package:args/command_runner.dart';
 import '../../constants/pubspec.yaml.g.dart';
 import '../riverpod/riverpod_command_runner.dart';
 
-class VersionCommand extends Command<int> with RiverpodCommand<int> {
+class VersionCommand extends Command<int> with RiverpodCommand {
   @override
   String get name => 'version';
 

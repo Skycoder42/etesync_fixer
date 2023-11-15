@@ -6,6 +6,7 @@ import 'package:riverpod/riverpod.dart';
 
 import '../constants/pubspec.yaml.g.dart';
 import 'commands/account/account_command.dart';
+import 'commands/invitations/invitations_command.dart';
 import 'commands/sync_command.dart';
 import 'commands/version_command.dart';
 import 'global_options.dart';
@@ -18,6 +19,7 @@ class Cli extends RiverpodCommandRunner<int> with GlobalOptionsRunnerMixin {
           Pubspec.description,
         ) {
     addCommand(AccountCommand());
+    addCommand(InvitationsCommand());
     addCommand(SyncCommand());
     addCommand(VersionCommand());
   }

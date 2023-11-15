@@ -40,7 +40,9 @@ dart_pre_commit:
   flutter-compat: false
 
 scripts:
+  help: dart run bin/etesync_fixer.dart help
   account:
     login: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json account login --server=https://etebase.skycoder42.de
+    fingerprint: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json account fingerprint
     logout: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json account logout
   sync: dart run bin/etesync_fixer.dart --log-level=all --config=./test-config.json sync

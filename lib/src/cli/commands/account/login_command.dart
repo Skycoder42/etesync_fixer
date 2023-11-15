@@ -25,13 +25,12 @@ final class LoginOptions {
   });
 }
 
-class LoginCommand extends _$LoginOptionsCommand<int>
-    with RiverpodCommand<int> {
+class LoginCommand extends _$LoginOptionsCommand<int> with RiverpodCommand {
   @override
   String get name => 'login';
 
   @override
-  String get description => 'Log into your etebase account';
+  String get description => 'Log into your etebase account.';
 
   @override
   bool get takesArguments => true;

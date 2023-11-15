@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../cli/global_options.dart';
 import '../config/config_loader.dart';
+import 'account_manager.dart';
 
 part 'etebase_provider.g.dart';
 
@@ -26,4 +27,22 @@ Future<EtebaseClient> etebaseClient(EtebaseClientRef ref) async {
 
   final config = await ref.watch(configLoaderProvider.future);
   return EtebaseClient.create('etesync-fixer', config.server);
+}
+
+@Riverpod(keepAlive: true)
+Future<EtebaseAccount> etebaseAccount(EtebaseAccountRef ref) async {
+  final account = await ref.watch(accountManagerProvider.future);
+  if (account == null) {
+    throw NotLoggedInException();
+  }
+  return account;
+}
+
+@Riverpod(keepAlive: true)
+Future<EtebaseCollectionInvitationManager> etebaseInvitationManager(
+  EtebaseInvitationManagerRef ref,
+) async {
+  final account = await ref.watch(etebaseAccountProvider.future);
+  ref.onDispose(() => ref.state.valueOrNull?.dispose());
+  return account.getInvitationManager();
 }

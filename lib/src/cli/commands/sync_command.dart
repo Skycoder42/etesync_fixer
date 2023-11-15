@@ -3,9 +3,10 @@ import 'package:etebase/etebase.dart';
 
 import '../../config/config_loader.dart';
 import '../../etebase/account_manager.dart';
+import '../../etebase/etebase_provider.dart';
 import '../riverpod/riverpod_command_runner.dart';
 
-class SyncCommand extends Command<int> with RiverpodCommand<int> {
+class SyncCommand extends Command<int> with RiverpodCommand {
   @override
   String get name => 'sync';
 

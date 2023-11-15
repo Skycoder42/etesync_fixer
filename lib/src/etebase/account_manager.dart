@@ -16,15 +16,6 @@ class NotLoggedInException implements Exception {
 }
 
 @Riverpod(keepAlive: true)
-Future<EtebaseAccount> etebaseAccount(EtebaseAccountRef ref) async {
-  final account = await ref.watch(accountManagerProvider.future);
-  if (account == null) {
-    throw NotLoggedInException();
-  }
-  return account;
-}
-
-@Riverpod(keepAlive: true)
 class AccountManager extends _$AccountManager {
   @override
   Future<EtebaseAccount?> build() {
