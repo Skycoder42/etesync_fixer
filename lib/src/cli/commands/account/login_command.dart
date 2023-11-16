@@ -39,18 +39,14 @@ class LoginCommand extends _$LoginOptionsCommand<int> with RiverpodCommand {
   String get invocation => '${super.invocation} <username> <password>';
 
   @override
-  Future<int> run() {
-    switch (argResults!.rest) {
-      case []:
-        usageException('Missing required positional parameter <username>');
-      case [_]:
-        usageException('Missing required positional parameter <password>');
-      case [final username, final password]:
-        return _run(username, password);
-      default:
-        usageException('Too many arguments');
-    }
-  }
+  Future<int> run() => switch (argResults!.rest) {
+        [] =>
+          usageException('Missing required positional parameter <username>'),
+        [_] =>
+          usageException('Missing required positional parameter <password>'),
+        [final username, final password] => _run(username, password),
+        _ => usageException('Too many arguments'),
+      };
 
   Future<int> _run(String username, String password) async {
     await container.read(configLoaderProvider.notifier).updateConfig(

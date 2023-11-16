@@ -70,15 +70,15 @@ class SyncCommand extends Command<int> with RiverpodCommand {
     EtebaseItemManager itemManager,
     EtebaseCollection collection,
   ) async {
-    print('verify: ${await collection.verify()}');
-    print('getUid: ${await collection.getUid()}');
-    print('getCollectionType: ${await collection.getCollectionType()}');
-    print('getAccessLevel: ${await collection.getAccessLevel()}');
-    print('getEtag: ${await collection.getEtag()}');
-    print('getStoken: ${await collection.getStoken()}');
-    print('getMeta: ${await collection.getMeta()}');
-    print('isDeleted: ${await collection.isDeleted()}');
-    print('getContent: ${await collection.getContent()}');
+    print('┌─verify: ${await collection.verify()}');
+    print('├─getUid: ${await collection.getUid()}');
+    print('├─getCollectionType: ${await collection.getCollectionType()}');
+    print('├─getAccessLevel: ${await collection.getAccessLevel()}');
+    print('├─getEtag: ${await collection.getEtag()}');
+    print('├─getStoken: ${await collection.getStoken()}');
+    print('├─getMeta: ${await collection.getMeta()}');
+    print('├─isDeleted: ${await collection.isDeleted()}');
+    print('└─getContent: ${await collection.getContent()}');
   }
 
   Future<void> _processUnshared(EtebaseRemovedCollection collection) async {

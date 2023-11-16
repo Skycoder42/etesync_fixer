@@ -8,6 +8,7 @@ import 'package:meta/meta.dart';
 
 import '../../../etebase/account_manager.dart';
 import '../../../etebase/etebase_provider.dart';
+import '../../../extensions/etebase_extensions.dart';
 import '../../../io/json_writer.dart';
 import '../../../io/structured_writer.dart';
 import '../../../io/table_writer.dart';
@@ -61,27 +62,9 @@ class ListCommand extends _$ListOptionsCommand<int> with RiverpodCommand {
       etebaseInvitationManagerProvider.future,
     );
 
-    String? iterator;
-    var isDone = true;
-    do {
-      final response = await invitationManager.listIncoming(
-        EtebaseFetchOptions(iterator: iterator),
-      );
-
-      try {
-        final invitations = await response.getData();
-
-        for (final invitation in invitations) {
-          await _processInvitation(writer, invitation);
-        }
-
-        iterator = await response.getIterator();
-        isDone = await response.isDone();
-      } finally {
-        await response.dispose();
-      }
-    } while (!isDone);
-
+    await invitationManager.processIncoming(
+      (invitation) => _processInvitation(writer, invitation),
+    );
     writer.writeTo(stdout);
 
     return 0;
@@ -105,7 +88,7 @@ class ListCommand extends _$ListOptionsCommand<int> with RiverpodCommand {
     }
   }
 
-  Future<void> _processInvitation(
+  Future<bool> _processInvitation(
     StructuredWriter writer,
     EtebaseSignedInvitation invitation,
   ) async {
@@ -117,5 +100,6 @@ class ListCommand extends _$ListOptionsCommand<int> with RiverpodCommand {
       'fromUsername': await invitation.getFromUsername(),
       'fromPubkey': await invitation.getFromPubkey(),
     });
+    return false;
   }
 }
