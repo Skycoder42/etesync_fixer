@@ -27,7 +27,7 @@ extension EtebaseCollectionInvitationManagerX
         }
 
         isDone = await response.isDone();
-        iterator = await response.getIterator();
+        iterator = isDone ? null : await response.getIterator();
       } finally {
         await response.dispose();
       }

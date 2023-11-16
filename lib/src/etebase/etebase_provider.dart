@@ -46,3 +46,23 @@ Future<EtebaseCollectionInvitationManager> etebaseInvitationManager(
   ref.onDispose(() => ref.state.valueOrNull?.dispose());
   return account.getInvitationManager();
 }
+
+@Riverpod(keepAlive: true)
+Future<EtebaseCollectionManager> etebaseCollectionManager(
+  EtebaseCollectionManagerRef ref,
+) async {
+  final account = await ref.watch(etebaseAccountProvider.future);
+  ref.onDispose(() => ref.state.valueOrNull?.dispose());
+  return account.getCollectionManager();
+}
+
+@riverpod
+Future<EtebaseItemManager> etebaseItemManager(
+  EtebaseItemManagerRef ref,
+  EtebaseCollection collection,
+) async {
+  final collectionManager =
+      await ref.watch(etebaseCollectionManagerProvider.future);
+  ref.onDispose(() => ref.state.valueOrNull?.dispose());
+  return collectionManager.getItemManager(collection);
+}

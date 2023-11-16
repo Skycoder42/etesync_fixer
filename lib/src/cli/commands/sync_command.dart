@@ -20,12 +20,11 @@ class SyncCommand extends Command<int> with RiverpodCommand {
 
   @override
   Future<int> run() async {
-    final config = await container.read(configLoaderProvider.future);
-
     await container.read(accountManagerProvider.notifier).restore();
-    final account = await container.read(etebaseAccountProvider.future);
 
-    final collectionManager = await account.getCollectionManager();
+    final config = await container.read(configLoaderProvider.future);
+    final collectionManager =
+        await container.read(etebaseCollectionManagerProvider.future);
 
     var stoken = config.collectionStoken;
     var isDone = true;
@@ -37,12 +36,12 @@ class SyncCommand extends Command<int> with RiverpodCommand {
 
       try {
         for (final collection in await response.getData()) {
-          final itemManager =
-              await collectionManager.getItemManager(collection);
+          final itemManagerProvider = etebaseItemManagerProvider(collection);
+          final itemManager = await container.read(itemManagerProvider.future);
           try {
             await _processModified(itemManager, collection);
           } finally {
-            await collectionManager.dispose();
+            container.invalidate(itemManagerProvider);
           }
         }
 
@@ -79,6 +78,25 @@ class SyncCommand extends Command<int> with RiverpodCommand {
     print('├─getMeta: ${await collection.getMeta()}');
     print('├─isDeleted: ${await collection.isDeleted()}');
     print('└─getContent: ${await collection.getContent()}');
+
+    String? stoken;
+    var isDone = true;
+    do {
+      final response = await itemManager.list(
+        EtebaseFetchOptions(stoken: stoken),
+      );
+
+      try {
+        for (final item in await response.getData()) {
+          print(await item.getUid());
+        }
+
+        isDone = await response.isDone();
+        stoken = isDone ? null : await response.getStoken();
+      } finally {
+        await response.dispose();
+      }
+    } while (!isDone);
   }
 
   Future<void> _processUnshared(EtebaseRemovedCollection collection) async {
