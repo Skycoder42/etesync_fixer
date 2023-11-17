@@ -25,8 +25,8 @@ Future<EtebaseClient> etebaseClient(EtebaseClientRef ref) async {
     ..watch(_etebaseInitializerProvider)
     ..onDispose(() => ref.state.valueOrNull?.dispose());
 
-  final config = await ref.watch(configLoaderProvider.future);
-  return EtebaseClient.create('etesync-fixer', config.server);
+  final server = ref.watch(configLoaderProvider.select((c) => c.server));
+  return EtebaseClient.create('etesync-fixer', server);
 }
 
 @Riverpod(keepAlive: true)

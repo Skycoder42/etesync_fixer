@@ -10,24 +10,24 @@ part 'config_loader.g.dart';
 
 @Riverpod(keepAlive: true)
 class ConfigLoader extends _$ConfigLoader {
+  // ignore: avoid_public_notifier_properties
   @override
-  Future<Config> build() async {
+  Config get state => super.state;
+
+  @override
+  Config build() {
     final configFile = File(ref.watch(globalOptionsProvider).config);
     if (!configFile.existsSync()) {
       return Config.empty;
     }
 
-    final stringContent = await configFile.readAsString();
+    final stringContent = configFile.readAsStringSync();
     return Config.fromJson(json.decode(stringContent) as Map<String, dynamic>);
   }
 
   Future<void> updateConfig(Config Function(Config c) updateCb) async {
-    try {
-      final updatedConfig = await update(updateCb);
-      final configFile = File(ref.read(globalOptionsProvider).config);
-      await configFile.writeAsString(json.encode(updatedConfig));
-    } on Exception catch (e, s) {
-      state = AsyncValue.error(e, s);
-    }
+    state = updateCb(state);
+    final configFile = File(ref.read(globalOptionsProvider).config);
+    await configFile.writeAsString(json.encode(state));
   }
 }

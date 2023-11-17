@@ -28,8 +28,8 @@ class AccountManager extends _$AccountManager {
           return oldAccount;
         }
 
-        final encryptedAccountData = await ref.read(
-          configLoaderProvider.selectAsync((c) => c.encryptedAccountData),
+        final encryptedAccountData = ref.read(
+          configLoaderProvider.select((c) => c.encryptedAccountData),
         );
         if (encryptedAccountData == null) {
           throw NotLoggedInException();
@@ -40,11 +40,22 @@ class AccountManager extends _$AccountManager {
         );
         final client = await ref.read(etebaseClientProvider.future);
 
-        return EtebaseAccount.restore(
+        final account = await EtebaseAccount.restore(
           client,
           encryptedAccountData,
           encryptionKey,
         );
+
+        try {
+          await account.fetchToken();
+          await _persistAccountData(account);
+          return account;
+
+          // ignore: avoid_catches_without_on_clauses
+        } catch (e) {
+          await account.dispose();
+          rethrow;
+        }
       });
 
   Future<void> login(String username, String password) =>
@@ -57,17 +68,7 @@ class AccountManager extends _$AccountManager {
         final account = await EtebaseAccount.login(client, username, password);
 
         try {
-          final encryptionKey = ref.read(
-            globalOptionsProvider.select((o) => o.encryptionKey),
-          );
-          final accountData = await account.save(encryptionKey);
-
-          await ref.read(configLoaderProvider.notifier).updateConfig(
-                (c) => c.copyWith(
-                  encryptedAccountData: accountData,
-                ),
-              );
-
+          await _persistAccountData(account);
           return account;
 
           // ignore: avoid_catches_without_on_clauses
@@ -91,4 +92,17 @@ class AccountManager extends _$AccountManager {
 
         return null;
       });
+
+  Future<void> _persistAccountData(EtebaseAccount account) async {
+    final encryptionKey = ref.read(
+      globalOptionsProvider.select((o) => o.encryptionKey),
+    );
+    final accountData = await account.save(encryptionKey);
+
+    await ref.read(configLoaderProvider.notifier).updateConfig(
+          (c) => c.copyWith(
+            encryptedAccountData: accountData,
+          ),
+        );
+  }
 }

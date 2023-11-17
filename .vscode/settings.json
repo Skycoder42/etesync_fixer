@@ -3,6 +3,7 @@
     "etebase",
     "etesync",
     "pubkey",
-    "stoken"
+    "stoken",
+    "stokens"
   ]
 }
