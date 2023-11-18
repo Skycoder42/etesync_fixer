@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../config/config.dart';
 import '../config/config_loader.dart';
+import 'item_sync.dart';
 
 part 'collection_sync.g.dart';
 
@@ -11,23 +12,28 @@ part 'collection_sync.g.dart';
 @Riverpod(keepAlive: true)
 CollectionSync collectionSync(CollectionSyncRef ref) => CollectionSync(
       ref.watch(configLoaderProvider.notifier),
+      ref.watch(itemSyncProvider),
     );
 // coverage:ignore-end
 
 class CollectionSync {
   final ConfigLoader _configLoader;
+  final ItemSync _itemSync;
 
   final _logger = Logger('$CollectionSync');
 
-  CollectionSync(this._configLoader);
+  CollectionSync(
+    this._configLoader,
+    this._itemSync,
+  );
 
-  Future<void> updateCollection(
+  Future<void> sync(
     EtebaseCollection collection,
     EtebaseItemManager itemManager,
   ) async {
     final uid = await collection.getUid();
     if (await collection.isDeleted()) {
-      await deleteCollection(uid);
+      await delete(uid);
       return;
     }
 
@@ -48,7 +54,7 @@ class CollectionSync {
     );
   }
 
-  Future<void> deleteCollection(String uid) async {
+  Future<void> delete(String uid) async {
     await _configLoader.updateConfig(
       (c) => c.copyWith(
         collectionStokens: c.collectionStokens.updatedWithout(uid),
@@ -69,7 +75,7 @@ class CollectionSync {
 
       try {
         for (final item in await response.getData()) {
-          _logger.fine(await item.getUid());
+          await _itemSync.syncItem(itemManager, item);
         }
 
         isDone = await response.isDone();

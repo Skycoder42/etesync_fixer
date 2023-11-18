@@ -55,14 +55,3 @@ Future<EtebaseCollectionManager> etebaseCollectionManager(
   ref.onDispose(() => ref.state.valueOrNull?.dispose());
   return account.getCollectionManager();
 }
-
-@riverpod
-Future<EtebaseItemManager> etebaseItemManager(
-  EtebaseItemManagerRef ref,
-  EtebaseCollection collection,
-) async {
-  final collectionManager =
-      await ref.watch(etebaseCollectionManagerProvider.future);
-  ref.onDispose(() => ref.state.valueOrNull?.dispose());
-  return collectionManager.getItemManager(collection);
-}
