@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:etebase/etebase.dart';
-import 'package:icalendar/icalendar.dart';
 import 'package:logging/logging.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../extensions/icalendar_extensions.dart';
+import '../../ical/ical_codec.dart';
 import '../sync_job.dart';
 
 part 'fix_task_reminders_job.g.dart';
@@ -41,9 +40,8 @@ class FixTaskRemindersJob implements SyncJob {
         .where((element) => element.trim().isNotEmpty)
         .followedBy(['']).join('\r\n');
 
-    final calObj =
-        crawlICalendarLines(_toCalendarLines(contentString).toList());
-    final calStr = _fromCalendarLines(calObj.toLines());
+    final calObj = iCalCodec.decode(contentString);
+    final calStr = iCalCodec.encode(calObj);
 
     if (calStr != contentString) {
       var firstDiffIndex = -1;
@@ -73,46 +71,5 @@ DELTA:
     }
 
     return SyncResult.unchanged;
-  }
-
-  Iterable<String> _toCalendarLines(String content) sync* {
-    var previousLine = '';
-    for (final currentLine in LineSplitter.split(content)) {
-      if (currentLine.startsWith(RegExp(r'\s'))) {
-        previousLine += currentLine.substring(1);
-      } else {
-        if (previousLine.isNotEmpty) {
-          yield previousLine;
-        }
-
-        previousLine = currentLine;
-      }
-    }
-
-    if (previousLine.isNotEmpty) {
-      yield previousLine;
-    }
-  }
-
-  String _fromCalendarLines(Iterable<String> lines) {
-    const crLf = '\r\n';
-
-    final buffer = StringBuffer();
-    for (final line in lines) {
-      var segment = line;
-      while (segment.length > 75) {
-        buffer
-          ..write(segment.substring(0, 75))
-          ..write(crLf)
-          ..write(' ');
-        segment = segment.substring(75);
-      }
-
-      buffer
-        ..write(segment)
-        ..write(crLf);
-    }
-
-    return buffer.toString();
   }
 }
