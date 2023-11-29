@@ -43,7 +43,7 @@ class CollectionSync {
       ..info('$uid - oldToken: $oldToken')
       ..info('$uid - newToken: $newToken');
 
-    await _processItems(itemManager, oldToken);
+    await _processItems(collection, itemManager, oldToken);
 
     await _configLoader.updateConfig(
       (c) => c.copyWith(
@@ -63,6 +63,7 @@ class CollectionSync {
   }
 
   Future<void> _processItems(
+    EtebaseCollection collection,
     EtebaseItemManager itemManager,
     String? oldToken,
   ) async {
@@ -75,7 +76,7 @@ class CollectionSync {
 
       try {
         for (final item in await response.getData()) {
-          await _itemSync.syncItem(itemManager, item);
+          await _itemSync.syncItem(itemManager, collection, item);
         }
 
         isDone = await response.isDone();

@@ -17,6 +17,7 @@ dependencies:
   build_cli_annotations: ^2.1.0
   etebase: ^1.0.2
   freezed_annotation: ^2.4.1
+  icalendar: ^0.1.3
   json_annotation: ^4.8.1
   logging: ^1.2.0
   meta: ^1.11.0

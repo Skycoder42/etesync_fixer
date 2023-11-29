@@ -1,21 +1,27 @@
 import 'package:etebase/etebase.dart';
-import 'package:logging/logging.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import 'sync_job_registry.dart';
 
 part 'item_sync.g.dart';
 
 // coverage:ignore-start
 @Riverpod(keepAlive: true)
-ItemSync itemSync(ItemSyncRef ref) => ItemSync();
+ItemSync itemSync(ItemSyncRef ref) => ItemSync(
+      ref.watch(syncJobRegistryProvider),
+    );
 // coverage:ignore-end
 
 class ItemSync {
-  final _logger = Logger('$ItemSync');
+  final SyncJobRegistry _syncJobRegistry;
+
+  ItemSync(this._syncJobRegistry);
 
   Future<void> syncItem(
     EtebaseItemManager itemManager,
+    EtebaseCollection collection,
     EtebaseItem item,
   ) async {
-    _logger.fine(await item.getUid());
+    await _syncJobRegistry.sync(collection, item);
   }
 }
