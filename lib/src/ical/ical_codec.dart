@@ -4,6 +4,8 @@ import 'package:icalendar/icalendar.dart';
 
 const iCalCodec = ICalCodec();
 
+final iCalBinaryCodec = iCalCodec.fuse(utf8);
+
 final class ICalCodec with Codec<List<CrawledBlock>, String> {
   const ICalCodec();
 
