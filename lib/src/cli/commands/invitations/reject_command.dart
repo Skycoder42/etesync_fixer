@@ -1,13 +1,17 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:logging/logging.dart';
 
 import '../../../etebase/account_manager.dart';
 import '../../../etebase/etebase_provider.dart';
 import '../../../extensions/etebase_extensions.dart';
+import '../../../extensions/logging_extensions.dart';
 import '../../riverpod/riverpod_command_runner.dart';
 
 class RejectCommand extends Command<int> with RiverpodCommand {
+  final _logger = Logger('$RejectCommand');
+
   @override
   String get name => 'reject';
 
@@ -30,23 +34,33 @@ class RejectCommand extends Command<int> with RiverpodCommand {
       };
 
   Future<int> _run(String invitationUid) async {
+    _logger.command(this);
+
     await container.read(accountManagerProvider.notifier).restore();
 
     final invitationManager = await container.read(
       etebaseInvitationManagerProvider.future,
     );
 
+    var didReject = false;
     await invitationManager.processIncoming(
       (invitation) async {
         final uid = await invitation.getUid();
         if (uid == invitationUid) {
           await invitationManager.reject(invitation);
+          _logger.info('Invitation rejected!');
+          didReject = true;
           return true;
         } else {
           return false;
         }
       },
     );
+
+    if (!didReject) {
+      _logger.severe('No invitation with id $invitationUid was found!');
+      return 1;
+    }
 
     return 0;
   }

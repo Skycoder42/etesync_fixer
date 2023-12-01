@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:build_cli_annotations/build_cli_annotations.dart';
 import 'package:etebase/etebase.dart';
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 
 import '../../../etebase/account_manager.dart';
 import '../../../etebase/etebase_provider.dart';
 import '../../../extensions/etebase_extensions.dart';
+import '../../../extensions/logging_extensions.dart';
 import '../../../io/json_writer.dart';
 import '../../../io/structured_writer.dart';
 import '../../../io/table_writer.dart';
@@ -42,6 +44,8 @@ final class ListOptions {
 }
 
 class ListCommand extends _$ListOptionsCommand<int> with RiverpodCommand {
+  final _logger = Logger('$ListCommand');
+
   @override
   String get name => 'list';
 
@@ -54,6 +58,10 @@ class ListCommand extends _$ListOptionsCommand<int> with RiverpodCommand {
 
   @override
   Future<int> run() async {
+    _logger
+      ..command(this)
+      ..config('format=${_options.format}');
+
     await container.read(accountManagerProvider.notifier).restore();
 
     final writer = await _createWriter();

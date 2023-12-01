@@ -1,9 +1,11 @@
 import 'package:args/command_runner.dart';
 import 'package:build_cli_annotations/build_cli_annotations.dart';
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 
 import '../../../config/config_loader.dart';
 import '../../../etebase/account_manager.dart';
+import '../../../extensions/logging_extensions.dart';
 import '../../riverpod/riverpod_command_runner.dart';
 
 part 'login_command.g.dart';
@@ -26,6 +28,8 @@ final class LoginOptions {
 }
 
 class LoginCommand extends _$LoginOptionsCommand<int> with RiverpodCommand {
+  final _logger = Logger('$LoginCommand');
+
   @override
   String get name => 'login';
 
@@ -49,6 +53,10 @@ class LoginCommand extends _$LoginOptionsCommand<int> with RiverpodCommand {
       };
 
   Future<int> _run(String username, String password) async {
+    _logger
+      ..command(this)
+      ..config('server=${_options.server}');
+
     await container.read(configLoaderProvider.notifier).updateConfig(
           (c) => c.copyWith(
             server: _options.server,
@@ -57,6 +65,9 @@ class LoginCommand extends _$LoginOptionsCommand<int> with RiverpodCommand {
 
     final accountManager = container.read(accountManagerProvider.notifier);
     await accountManager.login(username, password);
+
+    _logger.info('Login successful!');
+
     return 0;
   }
 }

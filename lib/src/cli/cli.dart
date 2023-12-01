@@ -13,6 +13,8 @@ import 'global_options.dart';
 import 'riverpod/riverpod_command_runner.dart';
 
 class Cli extends RiverpodCommandRunner<int> with GlobalOptionsRunnerMixin {
+  final _logger = Logger('$Cli');
+
   Cli()
       : super(
           Platform.script.pathSegments.last,
@@ -35,6 +37,12 @@ class Cli extends RiverpodCommandRunner<int> with GlobalOptionsRunnerMixin {
       final versionCommand = commands['version'];
       return versionCommand!.run()!;
     }
+
+    _logger
+      ..config('libetebase=${globalOptions.libetebase}')
+      ..config('encryptionKey=${globalOptions.encryptionKey}')
+      ..config('config=${globalOptions.config}')
+      ..config('logLevel=${globalOptions.logLevel}');
 
     return null;
   }
