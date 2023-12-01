@@ -15,6 +15,7 @@ executables:
 dependencies:
   args: ^2.4.2
   build_cli_annotations: ^2.1.0
+  collection: ^1.18.0
   etebase: ^1.0.2
   freezed_annotation: ^2.4.1
   icalendar: ^0.1.3

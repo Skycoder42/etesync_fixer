@@ -32,30 +32,62 @@ class FixTaskRemindersJob implements SyncJob {
     final content = await item.getContent();
     final calendar = iCalBinaryCodec.decode(content);
 
-    final todos = calendar.findBlocks('vtodo');
+    final todos = calendar.findBlocks('VTODO');
+    for (final todo in todos) {
+      final alarms = todo.findBlocks('VALARM');
+      if (alarms.isNotEmpty) {
+        continue;
+      }
+
+      final relatedTo = todo.property('RELATED-TO');
+      if (relatedTo != null && relatedTo['RELTYPE']?.value == 'PARENT') {
+        continue;
+      }
+
+      // create the alarm
+      const alarm = CrawledBlock(
+        blockName: 'VALARM',
+        properties: [
+          CrawledProperty(
+            name: 'TRIGGER',
+            value: 'PT0S',
+            parameters: [CrawledParameter('RELATED', 'END')],
+          ),
+          CrawledProperty(
+            name: 'ACTION',
+            value: 'DISPLAY',
+            parameters: [],
+          ),
+          CrawledProperty(
+            name: 'DESCRIPTION',
+            value: 'Default etesync-fixer description',
+            parameters: [],
+          ),
+        ],
+        nestedBlocks: [],
+      );
+      todo.nestedBlocks.add(alarm);
+
+      final buffer = StringBuffer();
+      _debugDumpBlocks(buffer, [todo]);
+      _logger.finest(buffer);
+    }
 
     return SyncResult.unchanged;
   }
 
   void _debugDumpBlocks(
     StringBuffer buffer,
-    int indent,
-    Iterable<CrawledBlock> blocks,
-  ) {
+    Iterable<CrawledBlock> blocks, [
+    int indent = 0,
+  ]) {
     for (final block in blocks) {
-      final hasChildren =
-          block.properties.isNotEmpty || block.nestedBlocks.isNotEmpty;
-
       buffer
-        ..writeStartTag(indent, block.blockName, autoClose: !hasChildren)
+        ..writeStartTag(indent, block.blockName)
         ..writeln();
 
-      if (!hasChildren) {
-        continue;
-      }
-
-      _debugDumpProps(buffer, indent + 1, block.properties);
-      _debugDumpBlocks(buffer, indent + 1, block.nestedBlocks);
+      _debugDumpProps(buffer, block.properties, indent + 1);
+      _debugDumpBlocks(buffer, block.nestedBlocks, indent + 1);
 
       buffer
         ..writeEndTag(indent, block.blockName)
@@ -65,9 +97,9 @@ class FixTaskRemindersJob implements SyncJob {
 
   void _debugDumpProps(
     StringBuffer buffer,
-    int indent,
-    Iterable<CrawledProperty> properties,
-  ) {
+    Iterable<CrawledProperty> properties, [
+    int indent = 0,
+  ]) {
     for (final property in properties) {
       buffer
         ..writeStartTag(
