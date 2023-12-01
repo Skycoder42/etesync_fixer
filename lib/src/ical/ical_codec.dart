@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:icalendar/icalendar.dart';
+import 'package:icalendar/icalendar.dart'
+    show CrawledBlock, CrawledParameter, CrawledProperty, crawlICalendarLines;
+
+import 'ical_component.dart';
 
 const iCalCodec = ICalCodec();
 
-final iCalBinaryCodec = iCalCodec.fuse(utf8);
+final iCalBinaryCodec = iCalCodec.fuse(utf8).fuse(const _TypedByteArrayCodec());
 
-final class ICalCodec with Codec<List<CrawledBlock>, String> {
+final class ICalCodec with Codec<ICalendar, String> {
   const ICalCodec();
 
   @override
@@ -16,12 +20,15 @@ final class ICalCodec with Codec<List<CrawledBlock>, String> {
   ICalEncoder get encoder => const ICalEncoder();
 }
 
-final class ICalDecoder with Converter<String, List<CrawledBlock>> {
+final class ICalDecoder with Converter<String, ICalendar> {
   const ICalDecoder();
 
   @override
-  List<CrawledBlock> convert(String input) =>
-      crawlICalendarLines(_toCalendarLines(input).toList());
+  ICalendar convert(String input) {
+    final calendarLines = _toCalendarLines(input).toList();
+    final crawledBlocks = crawlICalendarLines(calendarLines);
+    return _toCalendar(crawledBlocks);
+  }
 
   Iterable<String> _toCalendarLines(String content) sync* {
     var previousLine = '';
@@ -41,25 +48,46 @@ final class ICalDecoder with Converter<String, List<CrawledBlock>> {
       yield previousLine;
     }
   }
+
+  ICalendar _toCalendar(Iterable<CrawledBlock> blocks) => ICalendar(
+        blocks.map(_toBlock),
+      );
+
+  ICalBlock _toBlock(CrawledBlock block) => ICalBlock(
+        block.blockName,
+        properties: block.properties.map(_toProperty),
+        blocks: block.nestedBlocks.map(_toBlock),
+      );
+
+  ICalProperty _toProperty(CrawledProperty property) => ICalProperty(
+        property.name,
+        property.value,
+        parameters: property.parameters.map(_toParameter),
+      );
+
+  ICalParameter _toParameter(CrawledParameter parameter) =>
+      ICalParameter(parameter.name, parameter.value);
 }
 
-final class ICalEncoder with Converter<List<CrawledBlock>, String> {
+final class ICalEncoder with Converter<ICalendar, String> {
   static const _crLf = '\r\n';
   static final _unsafeCharRegex = RegExp('[,;:]');
 
   const ICalEncoder();
 
   @override
-  String convert(List<CrawledBlock> input) {
+  String convert(ICalendar input) {
     final buffer = StringBuffer();
-    for (final line in input.expand(_blockToLines)) {
+    for (final line in _calendarToLines(input)) {
+      var maxLineLength = 75;
       var segment = line;
-      while (segment.length > 75) {
+      while (segment.length > maxLineLength) {
         buffer
-          ..write(segment.substring(0, 75))
+          ..write(segment.substring(0, maxLineLength))
           ..write(_crLf)
           ..write(' ');
-        segment = segment.substring(75);
+        segment = segment.substring(maxLineLength);
+        maxLineLength = 74;
       }
 
       buffer
@@ -70,24 +98,28 @@ final class ICalEncoder with Converter<List<CrawledBlock>, String> {
     return buffer.toString();
   }
 
-  Iterable<String> _blockToLines(CrawledBlock block) sync* {
-    yield 'BEGIN:${block.blockName}';
+  Iterable<String> _calendarToLines(ICalendar calendar) =>
+      calendar.expand(_blockToLines);
 
-    for (final property in block.properties) {
-      yield _propertyToLine(property);
+  Iterable<String> _blockToLines(ICalBlock block) sync* {
+    yield 'BEGIN:${block.name}';
+
+    for (final component in block) {
+      switch (component) {
+        case final ICalProperty property:
+          yield _propertyToLine(property);
+        case final ICalBlock block:
+          yield* _blockToLines(block);
+      }
     }
 
-    for (final nestedBlock in block.nestedBlocks) {
-      yield* _blockToLines(nestedBlock);
-    }
-
-    yield 'END:${block.blockName}';
+    yield 'END:${block.name}';
   }
 
-  String _propertyToLine(CrawledProperty property) {
+  String _propertyToLine(ICalProperty property) {
     final buffer = StringBuffer(property.name);
 
-    for (final parameter in property.parameters) {
+    for (final parameter in property) {
       buffer.write(';');
       _writeLineSegment(buffer, parameter);
     }
@@ -99,7 +131,7 @@ final class ICalEncoder with Converter<List<CrawledBlock>, String> {
     return buffer.toString();
   }
 
-  void _writeLineSegment(StringBuffer buffer, CrawledParameter parameter) {
+  void _writeLineSegment(StringBuffer buffer, ICalParameter parameter) {
     buffer
       ..write(parameter.name)
       ..write('=')
@@ -108,4 +140,29 @@ final class ICalEncoder with Converter<List<CrawledBlock>, String> {
 
   String _iCalEscape(String value) =>
       value.contains(_unsafeCharRegex) ? '"$value"' : value;
+}
+
+final class _TypedByteArrayCodec extends Codec<List<int>, Uint8List> {
+  const _TypedByteArrayCodec();
+
+  @override
+  Converter<Uint8List, List<int>> get decoder => const _TypedByteArrayDecoder();
+
+  @override
+  Converter<List<int>, Uint8List> get encoder => const _TypedByteArrayEncoder();
+}
+
+final class _TypedByteArrayEncoder with Converter<List<int>, Uint8List> {
+  const _TypedByteArrayEncoder();
+
+  @override
+  Uint8List convert(List<int> input) =>
+      input is Uint8List ? input : Uint8List.fromList(input);
+}
+
+final class _TypedByteArrayDecoder with Converter<Uint8List, List<int>> {
+  const _TypedByteArrayDecoder();
+
+  @override
+  List<int> convert(Uint8List input) => input;
 }

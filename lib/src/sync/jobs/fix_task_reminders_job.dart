@@ -1,10 +1,9 @@
 import 'package:etebase/etebase.dart';
-import 'package:icalendar/icalendar.dart';
 import 'package:logging/logging.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../extensions/icalendar_extensions.dart';
 import '../../ical/ical_codec.dart';
+import '../../ical/ical_component.dart';
 import '../sync_job.dart';
 
 part 'fix_task_reminders_job.g.dart';
@@ -29,6 +28,7 @@ class FixTaskRemindersJob implements SyncJob {
     EtebaseCollection collection,
     EtebaseItem item,
   ) async {
+    var result = SyncResult.unchanged;
     final content = await item.getContent();
     final calendar = iCalBinaryCodec.decode(content);
 
@@ -39,65 +39,68 @@ class FixTaskRemindersJob implements SyncJob {
         continue;
       }
 
-      final relatedTo = todo.property('RELATED-TO');
-      if (relatedTo != null && relatedTo['RELTYPE']?.value == 'PARENT') {
+      final relatedTo = todo.getProperty('RELATED-TO');
+      if (relatedTo != null &&
+          relatedTo.getParameter('RELTYPE')?.value == 'PARENT') {
         continue;
       }
 
       // create the alarm
-      const alarm = CrawledBlock(
-        blockName: 'VALARM',
-        properties: [
-          CrawledProperty(
-            name: 'TRIGGER',
-            value: 'PT0S',
-            parameters: [CrawledParameter('RELATED', 'END')],
-          ),
-          CrawledProperty(
-            name: 'ACTION',
-            value: 'DISPLAY',
-            parameters: [],
-          ),
-          CrawledProperty(
-            name: 'DESCRIPTION',
-            value: 'Default etesync-fixer description',
-            parameters: [],
-          ),
-        ],
-        nestedBlocks: [],
-      );
-      todo.nestedBlocks.add(alarm);
-
-      final buffer = StringBuffer();
-      _debugDumpBlocks(buffer, [todo]);
-      _logger.finest(buffer);
+      todo.add(_createDefaultAlarm());
+      result = result.merge(SyncResult.modifiedItem);
     }
 
-    return SyncResult.unchanged;
+    if (result != SyncResult.unchanged) {
+      await item.setContent(iCalBinaryCodec.encode(calendar));
+      _logger.finest(_debugDumpBlocks(calendar));
+    }
+
+    return result;
   }
 
-  void _debugDumpBlocks(
-    StringBuffer buffer,
-    Iterable<CrawledBlock> blocks, [
+  ICalBlock _createDefaultAlarm() => ICalBlock(
+        'VALARM',
+        properties: [
+          ICalProperty(
+            'TRIGGER',
+            'PT0S',
+            parameters: [ICalParameter('RELATED', 'END')],
+          ),
+          ICalProperty(
+            'ACTION',
+            'DISPLAY',
+          ),
+          ICalProperty(
+            'DESCRIPTION',
+            'Default etesync-fixer description',
+          ),
+        ],
+      );
+
+  StringBuffer _debugDumpBlocks(
+    Iterable<ICalBlock> blocks, [
+    StringBuffer? buffer,
     int indent = 0,
   ]) {
+    buffer ??= StringBuffer();
     for (final block in blocks) {
       buffer
-        ..writeStartTag(indent, block.blockName)
+        ..writeStartTag(indent, block.name)
         ..writeln();
 
-      _debugDumpProps(buffer, block.properties, indent + 1);
-      _debugDumpBlocks(buffer, block.nestedBlocks, indent + 1);
+      _debugDumpProps(block.whereType<ICalProperty>(), buffer, indent + 1);
+      _debugDumpBlocks(block.whereType<ICalBlock>(), buffer, indent + 1);
 
       buffer
-        ..writeEndTag(indent, block.blockName)
+        ..writeEndTag(indent, block.name)
         ..writeln();
     }
+    return buffer;
   }
 
   void _debugDumpProps(
-    StringBuffer buffer,
-    Iterable<CrawledProperty> properties, [
+    Iterable<ICalProperty> properties,
+    StringBuffer buffer, [
     int indent = 0,
   ]) {
     for (final property in properties) {
@@ -106,7 +109,7 @@ class FixTaskRemindersJob implements SyncJob {
           indent,
           property.name,
           writeAttributes: (buffer) {
-            for (final param in property.parameters) {
+            for (final param in property) {
               buffer
                 ..write(' ')
                 ..write(param.name)
