@@ -40,10 +40,16 @@ class CollectionSync {
     final oldToken = _configLoader.state.collectionStokens[uid];
     final newToken = await collection.getStoken();
     _logger
-      ..info('$uid - oldToken: $oldToken')
-      ..info('$uid - newToken: $newToken');
+      ..finest('Restored stoken: $oldToken')
+      ..finest('New stoken: $newToken');
+    if (newToken == oldToken) {
+      _logger.finer(
+        'Skipping collection $uid, was not modified since the last sync',
+      );
+      return;
+    }
 
-    await _processItems(collection, itemManager, oldToken);
+    await _processItems(uid, collection, itemManager, oldToken);
 
     await _configLoader.updateConfig(
       (c) => c.copyWith(
@@ -55,6 +61,7 @@ class CollectionSync {
   }
 
   Future<void> delete(String uid) async {
+    _logger.info('Removing deleted collection $uid');
     await _configLoader.updateConfig(
       (c) => c.copyWith(
         collectionStokens: c.collectionStokens.updatedWithout(uid),
@@ -63,10 +70,13 @@ class CollectionSync {
   }
 
   Future<void> _processItems(
+    String uid,
     EtebaseCollection collection,
     EtebaseItemManager itemManager,
     String? oldToken,
   ) async {
+    _logger.finer('Processing updated items of collection $uid');
+
     var stoken = oldToken;
     var isDone = true;
     do {
@@ -81,6 +91,9 @@ class CollectionSync {
 
         isDone = await response.isDone();
         stoken = isDone ? null : await response.getStoken();
+        _logger.finest(
+          'Next stoken for collection $uid: $stoken (isDone: $isDone)',
+        );
       } finally {
         await response.dispose();
       }

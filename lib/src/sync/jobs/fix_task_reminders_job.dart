@@ -29,6 +29,7 @@ class FixTaskRemindersJob implements SyncJob {
     EtebaseItem item,
   ) async {
     var result = SyncResult.unchanged;
+    final uid = await item.getUid();
     final content = await item.getContent();
     final calendar = iCalBinaryCodec.decode(content);
 
@@ -46,13 +47,13 @@ class FixTaskRemindersJob implements SyncJob {
       }
 
       // create the alarm
+      _logger.info('Adding default alarm to ${todo.name} $uid');
       todo.add(_createDefaultAlarm());
       result = result.merge(SyncResult.modifiedItem);
     }
 
     if (result != SyncResult.unchanged) {
       await item.setContent(iCalBinaryCodec.encode(calendar));
-      _logger.finest(_debugDumpBlocks(calendar));
     }
 
     return result;
@@ -76,79 +77,4 @@ class FixTaskRemindersJob implements SyncJob {
           ),
         ],
       );
-
-  StringBuffer _debugDumpBlocks(
-    Iterable<ICalBlock> blocks, [
-    StringBuffer? buffer,
-    int indent = 0,
-  ]) {
-    buffer ??= StringBuffer();
-    for (final block in blocks) {
-      buffer
-        ..writeStartTag(indent, block.name)
-        ..writeln();
-
-      _debugDumpProps(block.whereType<ICalProperty>(), buffer, indent + 1);
-      _debugDumpBlocks(block.whereType<ICalBlock>(), buffer, indent + 1);
-
-      buffer
-        ..writeEndTag(indent, block.name)
-        ..writeln();
-    }
-    return buffer;
-  }
-
-  void _debugDumpProps(
-    Iterable<ICalProperty> properties,
-    StringBuffer buffer, [
-    int indent = 0,
-  ]) {
-    for (final property in properties) {
-      buffer
-        ..writeStartTag(
-          indent,
-          property.name,
-          writeAttributes: (buffer) {
-            for (final param in property) {
-              buffer
-                ..write(' ')
-                ..write(param.name)
-                ..write('="')
-                ..write(param.value)
-                ..write('"');
-            }
-          },
-        )
-        ..write(property.value)
-        ..writeEndTag(0, property.name)
-        ..writeln();
-    }
-  }
-}
-
-extension on StringBuffer {
-  void writeStartTag(
-    int indent,
-    String content, {
-    void Function(StringBuffer buffer)? writeAttributes,
-    bool autoClose = false,
-  }) {
-    write('  ' * indent);
-    write('<');
-    write(content);
-    if (writeAttributes != null) {
-      writeAttributes(this);
-    }
-    write(autoClose ? '/>' : '>');
-  }
-
-  void writeEndTag(
-    int indent,
-    String content,
-  ) {
-    write('  ' * indent);
-    write('</');
-    write(content);
-    write('>');
-  }
 }

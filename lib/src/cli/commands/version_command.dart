@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
-import '../../constants/pubspec.yaml.g.dart';
+// ignore: no_self_package_imports
+import '../../../gen/pubspec.yaml.g.dart';
 import '../riverpod/riverpod_command_runner.dart';
 
 class VersionCommand extends Command<int> with RiverpodCommand {

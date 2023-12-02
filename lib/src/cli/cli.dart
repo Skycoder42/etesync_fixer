@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:riverpod/riverpod.dart';
 
-import '../constants/pubspec.yaml.g.dart';
+// ignore: no_self_package_imports
+import '../../gen/pubspec.yaml.g.dart';
 import 'commands/account/account_command.dart';
 import 'commands/invitations/invitations_command.dart';
 import 'commands/sync_command.dart';

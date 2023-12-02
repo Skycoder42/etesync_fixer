@@ -1,6 +1,8 @@
 import 'package:etebase/etebase.dart';
+import 'package:logging/logging.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'sync_job.dart';
 import 'sync_job_registry.dart';
 
 part 'item_sync.g.dart';
@@ -15,6 +17,8 @@ ItemSync itemSync(ItemSyncRef ref) => ItemSync(
 class ItemSync {
   final SyncJobRegistry _syncJobRegistry;
 
+  final _logger = Logger('$ItemSync');
+
   ItemSync(this._syncJobRegistry);
 
   Future<void> syncItem(
@@ -22,6 +26,27 @@ class ItemSync {
     EtebaseCollection collection,
     EtebaseItem item,
   ) async {
-    await _syncJobRegistry.sync(collection, item);
+    final result = await _syncJobRegistry.sync(collection, item);
+    final now = DateTime.now();
+
+    if (result.itemModified) {
+      final uid = await item.getUid();
+      _logger.finest('Settings last modified timestamp of item $uid to $now');
+      final meta = await item.getMeta();
+      await item.setMeta(meta.copyWith(mtime: now));
+
+      // TODO upload item
+    }
+
+    if (result.collectionModified) {
+      final uid = await collection.getUid();
+      _logger.finest(
+        'Settings last modified timestamp of collection $uid to $now',
+      );
+      final meta = await collection.getMeta();
+      await collection.setMeta(meta.copyWith(mtime: now));
+
+      // TODO upload collection
+    }
   }
 }
