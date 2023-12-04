@@ -55,10 +55,19 @@ class AccountSync {
           _logger.fine(
             'Processing updated collection $uid (type: $collectionType)',
           );
+
           final itemManager =
               await _collectionManager.getItemManager(collection);
           try {
-            await _collectionSync.sync(collection, itemManager);
+            final updatedCollection = await _collectionSync.sync(
+              collection,
+              itemManager,
+            );
+
+            if (updatedCollection) {
+              _logger.fine('Uploading modified collection $uid');
+              await _collectionManager.transaction(collection);
+            }
           } finally {
             await itemManager.dispose();
           }

@@ -27,14 +27,14 @@ class CollectionSync {
     this._itemSync,
   );
 
-  Future<void> sync(
+  Future<bool> sync(
     EtebaseCollection collection,
     EtebaseItemManager itemManager,
   ) async {
     final uid = await collection.getUid();
     if (await collection.isDeleted()) {
       await delete(uid);
-      return;
+      return false;
     }
 
     final oldToken = _configLoader.state.collectionStokens[uid];
@@ -46,10 +46,15 @@ class CollectionSync {
       _logger.finer(
         'Skipping collection $uid, was not modified since the last sync',
       );
-      return;
+      return false;
     }
 
-    await _processItems(uid, collection, itemManager, oldToken);
+    final updatedCollection = await _processItems(
+      uid,
+      collection,
+      itemManager,
+      oldToken,
+    );
 
     await _configLoader.updateConfig(
       (c) => c.copyWith(
@@ -58,6 +63,8 @@ class CollectionSync {
             : c.collectionStokens.updatedWithout(uid),
       ),
     );
+
+    return updatedCollection;
   }
 
   Future<void> delete(String uid) async {
@@ -69,13 +76,15 @@ class CollectionSync {
     );
   }
 
-  Future<void> _processItems(
+  Future<bool> _processItems(
     String uid,
     EtebaseCollection collection,
     EtebaseItemManager itemManager,
     String? oldToken,
   ) async {
     _logger.finer('Processing updated items of collection $uid');
+
+    var updatedCollection = false;
 
     var stoken = oldToken;
     var isDone = true;
@@ -85,8 +94,29 @@ class CollectionSync {
       );
 
       try {
+        final updatedItems = <EtebaseItem>[];
+
         for (final item in await response.getData()) {
-          await _itemSync.syncItem(itemManager, collection, item);
+          final result = await _itemSync.syncItem(
+            itemManager,
+            collection,
+            item,
+          );
+
+          if (result.itemModified) {
+            updatedItems.add(item);
+          }
+          if (result.collectionModified) {
+            updatedCollection = true;
+          }
+        }
+
+        if (updatedItems.isNotEmpty) {
+          _logger.fine(
+            'Uploading ${updatedItems.length} modified items '
+            'for collection $uid',
+          );
+          await itemManager.transaction(updatedItems);
         }
 
         isDone = await response.isDone();
@@ -98,5 +128,7 @@ class CollectionSync {
         await response.dispose();
       }
     } while (!isDone);
+
+    return updatedCollection;
   }
 }

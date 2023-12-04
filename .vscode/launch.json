@@ -13,6 +13,7 @@
         "--log-level=all",
         "--config=./test-config.json",
         "sync",
+        "-f",
       ]
     }
   ]

@@ -21,7 +21,7 @@ class ItemSync {
 
   ItemSync(this._syncJobRegistry);
 
-  Future<void> syncItem(
+  Future<SyncResult> syncItem(
     EtebaseItemManager itemManager,
     EtebaseCollection collection,
     EtebaseItem item,
@@ -34,8 +34,6 @@ class ItemSync {
       _logger.finest('Settings last modified timestamp of item $uid to $now');
       final meta = await item.getMeta();
       await item.setMeta(meta.copyWith(mtime: now));
-
-      // TODO upload item
     }
 
     if (result.collectionModified) {
@@ -45,8 +43,8 @@ class ItemSync {
       );
       final meta = await collection.getMeta();
       await collection.setMeta(meta.copyWith(mtime: now));
-
-      // TODO upload collection
     }
+
+    return result;
   }
 }
