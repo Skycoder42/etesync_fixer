@@ -31,7 +31,8 @@
 		"ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
 			"plugins": "git colorize vscode",
 			"omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions"
-		}
+		},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
 	},
 	"postCreateCommand": "dart --disable-analytics && dart run tool/setup_git_hooks.dart"
 }
